@@ -7,50 +7,71 @@ VECTORIZER_FILE = 'tfidf_vectorizer.joblib'
 MODEL_FILE = 'rf_model.joblib'
 
 # ---- SCAM KEYWORD DATABASE ----
-# These are substrings that indicate scam content, even in garbled ASR output.
-# Using short substrings to catch partial/garbled words from Vosk.
+
+# SINGLE WORDS: These are individual words that indicate scam content.
+# Matched as whole words (not substrings) to avoid false positives.
+SCAM_SINGLE_WORDS = {
+    # Financial / theft keywords
+    'otp', 'cvv', 'upi', 'pin', 'money', 'bank', 'loan',
+    'credit', 'debit', 'payment', 'transaction', 'transfer',
+    'refund', 'cashback', 'deposit', 'withdraw',
+    # Scam / fraud keywords
+    'scam', 'spam', 'fraud', 'fake', 'illegal',
+    'lottery', 'prize', 'winner', 'reward', 'jackpot', 'lucky',
+    'congratulations', 'congratulat', 'congrats',
+    # Authority keywords
+    'arrest', 'warrant', 'police', 'court', 'cbi', 'rbi',
+    'customs', 'narcotics', 'enforcement',
+    # Identity keywords
+    'kyc', 'aadhaar', 'aadhar', 'adhaar', 'pan',
+    # Password / security
+    'password', 'passwor', 'passwo', 'passcode',
+    # Urgency keywords
+    'urgent', 'immediately', 'blocked', 'frozen', 'suspended',
+    'disconnected', 'terminated', 'expired', 'pending',
+    # Scam brands
+    'kbc',
+}
+
+# PHRASE SUBSTRINGS: Multi-word patterns that indicate scam (substring match)
 SCAM_SUBSTRINGS = [
-    # Core scam action words
-    'arrest', 'warrant', 'seize', 'prosecut', 'lawsuit',
-    'block', 'frozen', 'suspend', 'deactiv', 'disconnect', 'terminat',
-    'illegal', 'fraud', 'launder', 'narcotic', 'smuggl',
-    # Urgency / pressure words
-    'urgent', 'immediately', 'right now', 'within two hour',
+    # Core scam phrases
+    'arrest warrant', 'digital arrest', 'money launder',
+    'account block', 'account frozen', 'account band',
+    'sim block', 'sim band', 'sim deactiv',
+    'seize', 'prosecut', 'lawsuit',
+    # Urgency / pressure
+    'right now', 'within two hour', 'within 2 hour',
     'do not hang up', 'do not disconnect', 'stay on the line',
     'final notice', 'last warning', 'legal action',
-    # Financial theft words
-    'otp', 'cvv', 'pin number', 'upi pin', 'card number',
+    # Financial theft phrases
     'share your', 'verify your', 'send money', 'transfer fund',
     'pay fine', 'pay fee', 'registration fee', 'processing fee',
-    'bank detail', 'account number', 'refund',
-    # Identity words
-    'kyc', 'pan card', 'aadhaar', 'aadhar', 'adhaar',
+    'bank detail', 'account number', 'card number',
+    'pin number', 'upi pin',
+    # Identity phrases
+    'pan card', 'aadhaar card', 'aadhar card',
     # Authority impersonation
-    'cbi', 'police department', 'crime branch', 'customs',
-    'rbi', 'reserve bank', 'trai', 'enforcement',
+    'police department', 'crime branch', 'reserve bank',
     'income tax', 'court case', 'supreme court',
     'narcotics department', 'electricity department',
-    # Prize / lottery scams
-    'lottery', 'winner', 'won prize', 'won a gift', 'lucky draw',
-    'congratulat', 'claim now', 'claim your', 'gift card',
-    'scratch card', 'cash prize', 'kbc',
+    # Prize / lottery
+    'won prize', 'won a gift', 'lucky draw', 'cash prize',
+    'claim now', 'claim your', 'gift card', 'scratch card',
     # Investment scams
     'guaranteed return', 'double your money', 'no risk',
-    'invest now', 'crypto', 'trading platform',
+    'invest now', 'trading platform',
     # Telecom scams
-    'sim block', 'sim band', 'sim card kyc',
-    'number will be block', 'service terminated',
-    # Common scam phrases
+    'sim card kyc', 'number will be block', 'service terminated',
+    # Action phrases
     'press one', 'press nine', 'press 1', 'press 9',
-    'digital arrest', 'money launder',
-    'password', 'passwor', 'passwo',
-    'scam', 'spam',
+    'click on this link', 'click the link',
 ]
 
-# High-confidence scam phrases (if detected, very likely scam)
+# HIGH-CONFIDENCE: If any of these appear, it's almost certainly a scam
 HIGH_CONFIDENCE_PHRASES = [
     'digital arrest', 'arrest warrant', 'money laundering',
-    'share otp', 'share your otp', 'otp share',
+    'share otp', 'share your otp', 'otp share', 'share password',
     'kyc pending', 'kyc update', 'kyc expire',
     'account block', 'account frozen', 'account band',
     'sim block', 'sim band', 'sim deactivat',
@@ -58,6 +79,7 @@ HIGH_CONFIDENCE_PHRASES = [
     'narcotics', 'illegal parcel', 'seized package',
     'upi pin', 'cvv number', 'card number share',
     'do not hang up', 'stay on video call',
+    'click on this link',
 ]
 
 
@@ -78,29 +100,41 @@ class RealTimeClassifier:
 
     def _keyword_score(self, text):
         """
-        Scans text for scam keywords/substrings.
-        Returns a score between 0.0 and 1.0 based on keyword density.
-        Works even with garbled ASR output by using substring matching.
+        Scans text for scam keywords using both single-word and substring matching.
+        Returns a score between 0.0 and 1.0.
+        Works even with garbled ASR output.
         """
         text_lower = text.lower()
-        
+        words = set(text_lower.split())
+
         # Check high-confidence phrases first
         high_hits = sum(1 for phrase in HIGH_CONFIDENCE_PHRASES if phrase in text_lower)
         if high_hits > 0:
             return min(0.85 + (high_hits * 0.05), 1.0)
 
-        # Count regular scam substring matches
-        hits = sum(1 for kw in SCAM_SUBSTRINGS if kw in text_lower)
+        # Count single-word matches (exact word match)
+        word_hits = sum(1 for w in words if w in SCAM_SINGLE_WORDS)
+        # Also check if any scam single word appears as substring in garbled text
+        # e.g. "passwordrd" contains "password", "lotteryre" contains "lottery"
+        for scam_word in SCAM_SINGLE_WORDS:
+            if len(scam_word) >= 4 and scam_word in text_lower:
+                if scam_word not in words:  # Don't double-count exact matches
+                    word_hits += 1
 
-        if hits == 0:
+        # Count phrase/substring matches
+        phrase_hits = sum(1 for kw in SCAM_SUBSTRINGS if kw in text_lower)
+
+        total_hits = word_hits + phrase_hits
+
+        if total_hits == 0:
             return 0.0
-        elif hits == 1:
-            return 0.35
-        elif hits == 2:
-            return 0.55
-        elif hits == 3:
-            return 0.70
-        elif hits <= 5:
+        elif total_hits == 1:
+            return 0.40  # Even 1 scam keyword = LOW risk
+        elif total_hits == 2:
+            return 0.60
+        elif total_hits == 3:
+            return 0.75
+        elif total_hits <= 5:
             return 0.85
         else:
             return 0.95
@@ -238,6 +272,7 @@ class SpeechAnalyzer:
     """Analyzes speech patterns to detect robocall characteristics."""
     def __init__(self, velocity_threshold=3.5, filler_threshold=0.0):
         self.velocity_threshold = velocity_threshold
+        self.filler_threshold = filler_threshold
         self.fillers = {'um', 'uh', 'err', 'ah', 'like', 'hmmm', 'hmm'}
 
     def analyze(self, text, duration_seconds):
