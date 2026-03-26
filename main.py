@@ -258,7 +258,19 @@ def main():
                     auto_blocked = True
                     print_block_alert(block_reason)
                     print(f"{RED}{BOLD}  📵 AUTO-DISCONNECTING CALL...{RESET}\n")
-                    break  # Stop audio capture = disconnect the call
+                    
+                    # Instead of breaking, we forcibly end the session to 'hang up' immediately
+                    end_time = time.time()
+                    capture.stop_stream()
+                    print_call_summary(call_monitor, classifier, blocklist, session_id,
+                                      start_time, end_time, full_transcript.strip(),
+                                      scam_fragments_log, auto_blocked, report_gen, prevention)
+                    print(f"{RED}{BOLD}\nCall disconnected by Scam Prevention System.{RESET}")
+                    
+                    # Auditory feedback using macOS 'say' command
+                    import os
+                    os.system('say "Scam call detected. Disconnecting."')
+                    sys.exit(0)
 
                 if is_persistent and not auto_blocked:
                     print(f"\n{RED}{BOLD}🛑 PERSISTENT SCAM DETECTED! (Confidence: {cum_conf:.2f}){RESET}")
