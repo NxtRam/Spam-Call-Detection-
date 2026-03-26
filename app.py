@@ -162,6 +162,8 @@ def call_analysis_task():
                 })
                 
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print(f"Error in audio capture: {e}")
     finally:
         active_call['is_running'] = False
