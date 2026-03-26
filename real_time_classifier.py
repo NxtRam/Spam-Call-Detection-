@@ -95,6 +95,13 @@ class RealTimeClassifier:
         if os.path.exists(VECTORIZER_FILE) and os.path.exists(MODEL_FILE):
             self.vectorizer = joblib.load(VECTORIZER_FILE)
             self.model = joblib.load(MODEL_FILE)
+            
+            # CRITICAL FIX for macOS + background threading:
+            # Force single-threaded inference. If n_jobs=-1, joblib tries to
+            # fork subprocesses inside the SocketIO daemon thread, which deadlocks.
+            if hasattr(self.model, 'n_jobs'):
+                self.model.n_jobs = 1
+                
             return True
         return False
 
