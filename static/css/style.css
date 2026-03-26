@@ -77,6 +77,7 @@ body {
     font-weight: 800;
     background: linear-gradient(90deg, #fff, var(--accent-cyan));
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     text-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
 }
