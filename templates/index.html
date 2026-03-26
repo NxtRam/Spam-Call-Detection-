@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scam Call Detection Shield</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Socket.IO -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.1/socket.io.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="background-anim"></div>
+
+    <div class="container">
+        
+        <!-- CALL CONTROL SCREEN -->
+        <div id="callScreen" class="glass-panel active text-center">
+            <h1 class="glow-text">AI SCAM SHIELD</h1>
+            <p class="subtitle">Real-Time On-Device Analysis</p>
+            
+            <div class="call-avatar pulsing">
+                <div class="avatar-icon">👤</div>
+            </div>
+            <h2 class="caller-id">Unknown Caller</h2>
+            <p class="caller-number">+91-9876543210</p>
+            
+            <div class="call-actions">
+                <button id="btnDecline" class="btn btn-red shadow-hover">Decline</button>
+                <button id="btnAccept" class="btn btn-green shadow-hover bounce-anim">Accept</button>
+            </div>
+        </div>
+
+        <!-- DASHBOARD (Hidden initially) -->
+        <div id="dashboardScreen" class="dashboard glass-panel hidden">
+            <div class="dash-header">
+                <div>
+                    <h2>Live Call Analysis</h2>
+                    <p class="timer" id="callTimer">00:00</p>
+                </div>
+                <button id="btnEndCall" class="btn btn-red-small shadow-hover">End Call</button>
+            </div>
+
+            <div class="dash-grid">
+                <!-- TRANSCRIPT PANEL -->
+                <div class="transcript-panel glass-subpanel">
+                    <h3><span class="recording-dot blink"></span> Live Transcript</h3>
+                    <div id="transcriptBox" class="transcript-box">
+                        <!-- Transcripts injected here -->
+                    </div>
+                </div>
+
+                <!-- THREAT METER PANEL -->
+                <div class="threat-panel glass-subpanel">
+                    <h3>Threat Level</h3>
+                    
+                    <div class="meter-container">
+                        <div class="circular-progress" id="threatProgress">
+                            <div class="inner-circle">
+                                <span class="percentage" id="threatPct">0%</span>
+                                <span class="label">Spam</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="risk-badge" id="riskBadge">⚪ SAFE</div>
+                    
+                    <div class="stats-row">
+                        <div class="stat">
+                            <span class="stat-value" id="totalFrags">0</span>
+                            <span class="stat-label">Total Frags</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-value" id="spamFrags">0</span>
+                            <span class="stat-label">Spam Frags</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AUTO-BLOCK OVERLAY -->
+        <div id="blockOverlay" class="block-overlay hidden">
+            <div class="block-content bounce-in">
+                <div class="icon-block">🛑</div>
+                <h1 class="red-glow-text">CALL AUTO-BLOCKED</h1>
+                <p id="blockReason" class="block-reason">Persistent spam detected</p>
+                <div class="warning-box">
+                    <p>⚠️ DO NOT share any personal information</p>
+                    <p>⚠️ DO NOT share OTP, PIN, or bank details</p>
+                    <p>⚠️ CALL DISCONNECTED</p>
+                </div>
+                <p class="report-link">Report: cybercrime.gov.in or call 1930</p>
+                <p id="reportFile" class="report-file"></p>
+                <button id="btnReturn" class="btn btn-outline shadow-hover">Return Home</button>
+            </div>
+        </div>
+        
+    </div>
+
+    <!-- Audio Visualizer Canvas -->
+    <canvas id="visualizer" class="visualizer"></canvas>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

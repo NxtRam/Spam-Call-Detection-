@@ -7,3 +7,6 @@ pandas
 fastapi
 uvicorn
 m2cgen
+flask
+flask-socketio
+eventlet
