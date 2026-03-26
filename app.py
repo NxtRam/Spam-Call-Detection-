@@ -1,6 +1,3 @@
-import eventlet
-eventlet.monkey_patch()
-
 import os
 import time
 import json
@@ -16,8 +13,8 @@ from real_time_classifier import RealTimeClassifier, StreamMonitor, CallMonitor,
 from call_prevention import ScamBlocklist, ScamReportGenerator, CallPrevention
 
 app = Flask(__name__)
-# Enable CORS for socketio
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+# Enable CORS for socketio, use safe native threading so PyAudio doesn't freeze the event loop
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 # Global state to track active call
 active_call = {
