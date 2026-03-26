@@ -1,0 +1,9 @@
+vosk
+pyaudio
+# Optional but helpful for audio processing
+numpy
+scikit-learn
+pandas
+fastapi
+uvicorn
+m2cgen

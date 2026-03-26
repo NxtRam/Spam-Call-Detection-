@@ -1,0 +1,21 @@
+SCAM CALL DETECTION - TRAINING REPORT
+==================================================
+
+Dataset: scam_call_dataset.csv
+Total samples: 5310
+Spam: 723 | Ham: 4587
+Train: 4248 | Test: 1062
+
+Accuracy: 0.9774
+CV Accuracy: 0.9646 (+/- 0.0427)
+
+Classification Report:
+              precision    recall  f1-score   support
+
+         Ham       0.97      1.00      0.99       917
+        Spam       1.00      0.83      0.91       145
+
+    accuracy                           0.98      1062
+   macro avg       0.99      0.92      0.95      1062
+weighted avg       0.98      0.98      0.98      1062
+
