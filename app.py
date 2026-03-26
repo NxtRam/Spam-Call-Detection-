@@ -68,6 +68,9 @@ def call_analysis_task():
             if not active_call['is_running']:
                 break
                 
+            # Yield to eventlet to flush WebSocket emits immediately
+            socketio.sleep(0)
+                
             # Calculate RMS energy for UI audio visualizer
             audio_data = np.frombuffer(audio_chunk, dtype=np.int16)
             energy = float(np.sqrt(np.mean(audio_data.astype(float)**2)))
