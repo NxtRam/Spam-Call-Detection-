@@ -257,6 +257,8 @@ def main():
                 if should_block and not auto_blocked:
                     auto_blocked = True
                     print_block_alert(block_reason)
+                    print(f"{RED}{BOLD}  📵 AUTO-DISCONNECTING CALL...{RESET}\n")
+                    break  # Stop audio capture = disconnect the call
 
                 if is_persistent and not auto_blocked:
                     print(f"\n{RED}{BOLD}🛑 PERSISTENT SCAM DETECTED! (Confidence: {cum_conf:.2f}){RESET}")
